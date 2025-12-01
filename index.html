@@ -12,54 +12,155 @@
     --muted: #888;
     --accent: #0f0;
     --error: #f55;
+    --glow: rgba(15, 255, 15, 0.3);
+  }
+
+  * {
+    box-sizing: border-box;
   }
 
   body {
-    background: var(--bg);
+    background: radial-gradient(ellipse at center, #0a0a0a 0%, #000 100%);
     color: var(--fg);
     font-family: "Roboto Mono", monospace;
     margin: 0;
     padding: 0;
     overflow: hidden;
     height: 100vh;
+    position: relative;
+  }
+
+  /* Animated background particles */
+  .particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    animation: float linear infinite;
+  }
+
+  @keyframes float {
+    0% {
+      transform: translateY(0) translateX(0);
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.3;
+    }
+    90% {
+      opacity: 0.3;
+    }
+    100% {
+      transform: translateY(-100vh) translateX(50px);
+      opacity: 0;
+    }
   }
 
   .window {
     position: absolute;
     width: 700px;
     max-width: 90vw;
-    background: #0a0a0a;
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 8px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    box-shadow: 
+      0 20px 60px rgba(0,0,0,0.8),
+      0 0 0 1px rgba(255,255,255,0.05),
+      0 0 40px rgba(15, 255, 15, 0.1);
     overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
+  }
+
+  .window.minimized {
+    opacity: 0;
+    transform: translate(var(--final-x), var(--final-y)) scale(0.3) !important;
+    pointer-events: none;
+  }
+
+  .window.opening {
+    animation: windowOpen 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes windowOpen {
+    0% {
+      opacity: 0;
+      transform: scale(0.5) translateY(-50px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
   }
 
   .titlebar {
-    background: linear-gradient(180deg, #1a1a1a, #0f0f0f);
-    padding: 10px 14px;
+    background: linear-gradient(180deg, rgba(26, 26, 26, 0.9), rgba(15, 15, 15, 0.9));
+    padding: 12px 16px;
     cursor: move;
     user-select: none;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    position: relative;
+  }
+
+  .titlebar::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(15, 255, 15, 0.3) 50%, 
+      transparent
+    );
+    opacity: 0;
+    animation: scanline 3s ease-in-out infinite;
+  }
+
+  @keyframes scanline {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 0.5; }
   }
 
   .titlebar-left {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+  }
+
+  .window-icon {
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, #0f0, #0a0);
+    border-radius: 3px;
+    box-shadow: 0 0 10px var(--glow);
   }
 
   .window-title {
     font-size: 0.85rem;
     font-weight: 600;
+    text-shadow: 0 0 10px var(--glow);
   }
 
   .window-buttons {
     display: flex;
-    gap: 6px;
+    gap: 8px;
   }
 
   .window-btn {
@@ -67,19 +168,66 @@
     height: 12px;
     border-radius: 50%;
     cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
   }
 
-  .btn-close { background: #ff5f56; }
-  .btn-minimize { background: #ffbd2e; }
-  .btn-maximize { background: #27c93f; }
+  .window-btn::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .window-btn:hover::before {
+    opacity: 1;
+    box-shadow: 0 0 15px currentColor;
+  }
+
+  .btn-close { 
+    background: #ff5f56;
+    color: #ff5f56;
+  }
+  .btn-minimize { 
+    background: #ffbd2e;
+    color: #ffbd2e;
+  }
+  .btn-maximize { 
+    background: #27c93f;
+    color: #27c93f;
+  }
 
   .terminal {
-    background: #050505;
-    padding: 14px;
-    height: 400px;
+    background: rgba(5, 5, 5, 0.8);
+    padding: 16px;
+    height: 450px;
     overflow-y: auto;
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.7;
+    position: relative;
+  }
+
+  .terminal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+      linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.03));
+    background-size: 100% 4px, 3px 100%;
+    pointer-events: none;
+    animation: flicker 0.15s infinite;
+  }
+
+  @keyframes flicker {
+    0% { opacity: 0.97; }
+    50% { opacity: 1; }
+    100% { opacity: 0.97; }
   }
 
   .terminal::-webkit-scrollbar {
@@ -91,28 +239,57 @@
   }
 
   .terminal::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.2);
+    background: rgba(15, 255, 15, 0.3);
     border-radius: 4px;
   }
 
-  .line {
-    margin: 2px 0;
+  .terminal::-webkit-scrollbar-thumb:hover {
+    background: rgba(15, 255, 15, 0.5);
   }
 
-  .line.system { color: #0af; }
-  .line.success { color: var(--accent); }
-  .line.error { color: var(--error); }
-  .line.warning { color: #fa0; }
+  .line {
+    margin: 3px 0;
+    animation: lineAppear 0.3s ease;
+  }
+
+  @keyframes lineAppear {
+    from {
+      opacity: 0;
+      transform: translateX(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .line.system { 
+    color: #0af;
+    text-shadow: 0 0 5px rgba(0, 170, 255, 0.5);
+  }
+  .line.success { 
+    color: var(--accent);
+    text-shadow: 0 0 5px var(--glow);
+  }
+  .line.error { 
+    color: var(--error);
+    text-shadow: 0 0 5px rgba(255, 85, 85, 0.5);
+  }
+  .line.warning { 
+    color: #fa0;
+    text-shadow: 0 0 5px rgba(255, 170, 0, 0.5);
+  }
 
   .input-line {
     display: flex;
     align-items: center;
-    margin-top: 4px;
+    margin-top: 6px;
   }
 
   .prompt {
     color: var(--accent);
     margin-right: 8px;
+    text-shadow: 0 0 5px var(--glow);
   }
 
   #input {
@@ -123,15 +300,17 @@
     font-size: inherit;
     outline: none;
     flex: 1;
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
   }
 
   .cursor {
     display: inline-block;
     width: 8px;
     height: 14px;
-    background: var(--fg);
+    background: var(--accent);
     margin-left: 2px;
     animation: blink 1s infinite;
+    box-shadow: 0 0 5px var(--glow);
   }
 
   @keyframes blink {
@@ -142,38 +321,139 @@
   .startup-text {
     color: var(--muted);
     font-size: 0.85rem;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
+  }
+
+  /* Restore Button */
+  .restore-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, rgba(15, 255, 15, 0.2), rgba(15, 255, 15, 0.1));
+    border: 1px solid rgba(15, 255, 15, 0.3);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: var(--accent);
+    box-shadow: 
+      0 5px 20px rgba(15, 255, 15, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .restore-btn.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .restore-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 
+      0 8px 30px rgba(15, 255, 15, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .restore-btn:active {
+    transform: scale(0.95);
+  }
+
+  .restore-btn::before {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    background: linear-gradient(135deg, var(--accent), transparent) border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: rotate 3s linear infinite;
+  }
+
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Loading effect */
+  .loading-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    width: 0%;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    box-shadow: 0 0 10px var(--glow);
+    animation: loading 2s ease-in-out;
+  }
+
+  @keyframes loading {
+    0% { width: 0%; }
+    100% { width: 100%; }
   }
 </style>
 </head>
 <body>
-  <div class="window" id="window">
+  <div class="particles" id="particles"></div>
+
+  <div class="window opening" id="window">
     <div class="titlebar" id="titlebar">
       <div class="titlebar-left">
-        <div class="window-title">Eclipse V1 - Terminal</div>
+        <div class="window-icon"></div>
+        <div class="window-title">Eclipse V1 Terminal</div>
       </div>
       <div class="window-buttons">
-        <div class="window-btn btn-close" onclick="closeWindow()"></div>
-        <div class="window-btn btn-minimize"></div>
+        <div class="window-btn btn-close" onclick="minimizeWindow()"></div>
+        <div class="window-btn btn-minimize" onclick="minimizeWindow()"></div>
         <div class="window-btn btn-maximize"></div>
       </div>
     </div>
     
     <div class="terminal" id="terminal">
-      <div class="startup-text">Eclipse V1 Admin Panel v1.0.0</div>
-      <div class="startup-text">Type /help for available commands</div>
-      <div style="margin-bottom: 12px;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+      <div class="startup-text">╔════════════════════════════════════════╗</div>
+      <div class="startup-text">║  Eclipse V1 Admin Panel v1.0.0        ║</div>
+      <div class="startup-text">║  Type /help for available commands     ║</div>
+      <div class="startup-text">╚════════════════════════════════════════╝</div>
+      <div style="margin-bottom: 12px;"></div>
     </div>
+  </div>
+
+  <div class="restore-btn" id="restoreBtn" onclick="restoreWindow()">
+    <span>⬆</span>
   </div>
 
 <script>
 const terminalDiv = document.getElementById("terminal");
 const windowEl = document.getElementById("window");
 const titlebar = document.getElementById("titlebar");
+const restoreBtn = document.getElementById("restoreBtn");
+const particlesContainer = document.getElementById("particles");
 
 const fileURL = "EclipseV1.rbxm";
 let commandHistory = [];
 let historyIndex = -1;
+
+// Create floating particles
+function createParticles() {
+  for (let i = 0; i < 30; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+    particle.style.animationDelay = Math.random() * 5 + 's';
+    particlesContainer.appendChild(particle);
+  }
+}
+
+createParticles();
 
 // Center window on load
 window.addEventListener("load", () => {
@@ -218,6 +498,24 @@ function drag(e) {
 
 function dragEnd() {
   isDragging = false;
+}
+
+function minimizeWindow() {
+  windowEl.style.setProperty('--final-x', xOffset + 'px');
+  windowEl.style.setProperty('--final-y', yOffset + 'px');
+  windowEl.classList.add('minimized');
+  setTimeout(() => {
+    restoreBtn.classList.add('visible');
+  }, 200);
+}
+
+function restoreWindow() {
+  windowEl.classList.remove('minimized');
+  restoreBtn.classList.remove('visible');
+  const input = document.getElementById("input");
+  if (input) {
+    setTimeout(() => input.focus(), 100);
+  }
 }
 
 function addLine(text, className = "") {
@@ -281,50 +579,63 @@ function processCommand(cmd) {
   
   switch(command) {
     case "/help":
-      addLine("Available Commands:", "system");
-      addLine("  /help        - Show this help message");
-      addLine("  /download    - Download Eclipse V1 file");
-      addLine("  /init        - Initialize system boot sequence");
-      addLine("  /status      - Show system status");
-      addLine("  /hash        - Generate file checksum");
-      addLine("  /clear       - Clear terminal");
-      addLine("  /about       - About Eclipse V1");
-      addLine("  /exit        - Close terminal");
+      addLine("╔════════════════════════════════════════╗", "system");
+      addLine("║         AVAILABLE COMMANDS             ║", "system");
+      addLine("╠════════════════════════════════════════╣", "system");
+      addLine("║ /help      - Show this help message    ║");
+      addLine("║ /download  - Download Eclipse V1 file  ║");
+      addLine("║ /init      - Initialize boot sequence  ║");
+      addLine("║ /status    - Show system status        ║");
+      addLine("║ /hash      - Generate file checksum    ║");
+      addLine("║ /clear     - Clear terminal            ║");
+      addLine("║ /about     - About Eclipse V1          ║");
+      addLine("║ /minimize  - Minimize terminal         ║");
+      addLine("╚════════════════════════════════════════╝", "system");
       break;
       
     case "/download":
       addLine("[DOWNLOAD] Initiating secure file transfer...", "system");
+      const loadingBar = document.createElement('div');
+      loadingBar.className = 'loading-bar';
+      windowEl.appendChild(loadingBar);
+      setTimeout(() => {
+        addLine("[DOWNLOAD] Establishing encrypted connection...", "system");
+      }, 600);
       setTimeout(() => {
         addLine("[DOWNLOAD] File: EclipseV1.rbxm", "success");
-        addLine("[DOWNLOAD] Transfer complete.", "success");
+        addLine("[DOWNLOAD] Transfer complete ✓", "success");
+        loadingBar.remove();
         const a = document.createElement("a");
         a.href = fileURL;
         a.download = "EclipseV1.rbxm";
         a.click();
-      }, 800);
+      }, 2000);
       break;
       
     case "/init":
       addLine("[SYS] Initializing boot sequence...", "system");
-      setTimeout(() => addLine("[SYS] Loading core modules...", "system"), 400);
-      setTimeout(() => addLine("[SYS] Environment verified.", "success"), 800);
-      setTimeout(() => addLine("[SYS] System ready.", "success"), 1200);
+      setTimeout(() => addLine("[SYS] Loading core modules...", "system"), 300);
+      setTimeout(() => addLine("[SYS] Checking integrity...", "system"), 600);
+      setTimeout(() => addLine("[SYS] Environment verified ✓", "success"), 900);
+      setTimeout(() => addLine("[SYS] System ready ✓", "success"), 1200);
       break;
       
     case "/status":
-      addLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "system");
-      addLine("System Status: ONLINE", "success");
-      addLine("File Status: READY");
-      addLine("Security: ENABLED");
-      addLine(`Uptime: ${Math.floor(Math.random() * 1000)}h ${Math.floor(Math.random() * 60)}m`);
-      addLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "system");
+      addLine("╔════════════════════════════════════════╗", "system");
+      addLine("║         SYSTEM STATUS                  ║", "system");
+      addLine("╠════════════════════════════════════════╣", "system");
+      addLine("║ Status:    ONLINE                  ✓   ║", "success");
+      addLine("║ File:      READY                   ✓   ║", "success");
+      addLine("║ Security:  ENABLED                 ✓   ║", "success");
+      addLine(`║ Uptime:    ${Math.floor(Math.random() * 1000)}h ${Math.floor(Math.random() * 60)}m                   ║`);
+      addLine("╚════════════════════════════════════════╝", "system");
       break;
       
     case "/hash":
       addLine("[HASH] Generating SHA-256 checksum...", "system");
       const hash = randomHash();
       setTimeout(() => {
-        addLine(`[HASH] ${hash}`, "success");
+        addLine(`[HASH] ✓ ${hash}`, "success");
       }, 600);
       break;
       
@@ -333,21 +644,22 @@ function processCommand(cmd) {
       break;
       
     case "/about":
-      addLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "system");
-      addLine("Eclipse V1 Admin Panel");
-      addLine("Version: 1.0.0");
-      addLine("Secure File Distribution System");
-      addLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "system");
+      addLine("╔════════════════════════════════════════╗", "system");
+      addLine("║       Eclipse V1 Admin Panel           ║", "system");
+      addLine("╠════════════════════════════════════════╣", "system");
+      addLine("║ Version: 1.0.0                         ║");
+      addLine("║ Build:   2025.12.01                    ║");
+      addLine("║ Type:    Secure File Distribution     ║");
+      addLine("╚════════════════════════════════════════╝", "system");
       break;
-      
-    case "/exit":
-      addLine("[SYS] Closing terminal...", "warning");
-      setTimeout(closeWindow, 500);
+
+    case "/minimize":
+      minimizeWindow();
       break;
       
     default:
-      addLine(`Command not found: ${cmd}`, "error");
-      addLine('Type /help for available commands', "muted");
+      addLine(`✗ Command not found: ${cmd}`, "error");
+      addLine('  Type /help for available commands', "warning");
       break;
   }
 }
@@ -359,15 +671,9 @@ function randomHash() {
   return hash;
 }
 
-function closeWindow() {
-  windowEl.style.opacity = "0";
-  windowEl.style.transform = `translate(${xOffset}px, ${yOffset}px) scale(0.8)`;
-  windowEl.style.transition = "all 0.3s ease";
-}
-
 // Click to focus input
 terminalDiv.addEventListener("click", (e) => {
-  if (e.target === terminalDiv) {
+  if (e.target === terminalDiv || e.target.classList.contains('line')) {
     const input = document.getElementById("input");
     if (input) input.focus();
   }
