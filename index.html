@@ -10,213 +10,346 @@
     --bg: #000;
     --fg: #fff;
     --muted: #888;
-    --accent: #fff;
+    --accent: #0f0;
+    --error: #f55;
   }
 
   body {
     background: var(--bg);
     color: var(--fg);
     font-family: "Roboto Mono", monospace;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 24px;
-    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100vh;
   }
 
-  .container {
-    width: 100%;
-    max-width: 800px;
-    text-align: left;
-  }
-
-  h1 {
-    font-size: 2rem;
-    margin-bottom: 6px;
-  }
-
-  .subtitle {
-    color: var(--muted);
-    margin-bottom: 16px;
-    font-size: 0.9rem;
-  }
-
-  .terminal {
-    background: #050505;
-    border: 1px solid rgba(255,255,255,0.05);
-    padding: 14px;
+  .window {
+    position: absolute;
+    width: 700px;
+    max-width: 90vw;
+    background: #0a0a0a;
+    border: 1px solid rgba(255,255,255,0.2);
     border-radius: 8px;
-    height: 300px;
-    overflow-y: auto;
-    font-size: 13px;
-    line-height: 1.4;
-  }
-
-  .line {
-    opacity: 0;
-    transform: translateY(6px);
-    transition: all 0.3s ease;
-  }
-
-  .line.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .progress {
-    margin-top: 10px;
-    height: 10px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
     overflow: hidden;
   }
 
-  .bar {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #fff, #aaa);
-    transition: width 0.2s linear;
-  }
-
-  .controls {
-    margin-top: 20px;
+  .titlebar {
+    background: linear-gradient(180deg, #1a1a1a, #0f0f0f);
+    padding: 10px 14px;
+    cursor: move;
+    user-select: none;
     display: flex;
-    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
   }
 
-  button {
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.2);
-    color: var(--fg);
-    padding: 10px 18px;
+  .titlebar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .window-title {
+    font-size: 0.85rem;
     font-weight: 600;
-    font-size: 0.9rem;
+  }
+
+  .window-buttons {
+    display: flex;
+    gap: 6px;
+  }
+
+  .window-btn {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
     cursor: pointer;
-    border-radius: 6px;
-    transition: 0.2s;
   }
 
-  button:hover {
-    background: rgba(255,255,255,0.1);
+  .btn-close { background: #ff5f56; }
+  .btn-minimize { background: #ffbd2e; }
+  .btn-maximize { background: #27c93f; }
+
+  .terminal {
+    background: #050505;
+    padding: 14px;
+    height: 400px;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.6;
   }
 
-  button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+  .terminal::-webkit-scrollbar {
+    width: 8px;
   }
 
-  .status {
+  .terminal::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .terminal::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+  }
+
+  .line {
+    margin: 2px 0;
+  }
+
+  .line.system { color: #0af; }
+  .line.success { color: var(--accent); }
+  .line.error { color: var(--error); }
+  .line.warning { color: #fa0; }
+
+  .input-line {
+    display: flex;
+    align-items: center;
+    margin-top: 4px;
+  }
+
+  .prompt {
+    color: var(--accent);
+    margin-right: 8px;
+  }
+
+  #input {
+    background: transparent;
+    border: none;
+    color: var(--fg);
+    font-family: inherit;
+    font-size: inherit;
+    outline: none;
+    flex: 1;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--fg);
+    margin-left: 2px;
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  .startup-text {
     color: var(--muted);
     font-size: 0.85rem;
-    margin-top: 8px;
+    margin-bottom: 12px;
   }
 </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Eclipse V1</h1>
-    <div class="subtitle">Roblox Admin Panel — Secure File Pipeline</div>
-
-    <div class="terminal" id="terminal"></div>
-
-    <div class="progress"><div class="bar" id="bar"></div></div>
-    <div class="status" id="status">Idle</div>
-
-    <div class="controls">
-      <button id="run">Initialize Download</button>
-      <button id="download" disabled>Direct Download</button>
+  <div class="window" id="window">
+    <div class="titlebar" id="titlebar">
+      <div class="titlebar-left">
+        <div class="window-title">Eclipse V1 - Terminal</div>
+      </div>
+      <div class="window-buttons">
+        <div class="window-btn btn-close" onclick="closeWindow()"></div>
+        <div class="window-btn btn-minimize"></div>
+        <div class="window-btn btn-maximize"></div>
+      </div>
+    </div>
+    
+    <div class="terminal" id="terminal">
+      <div class="startup-text">Eclipse V1 Admin Panel v1.0.0</div>
+      <div class="startup-text">Type /help for available commands</div>
+      <div style="margin-bottom: 12px;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
     </div>
   </div>
 
 <script>
-const terminal = document.getElementById("terminal");
-const bar = document.getElementById("bar");
-const status = document.getElementById("status");
-const runBtn = document.getElementById("run");
-const dlBtn = document.getElementById("download");
+const terminalDiv = document.getElementById("terminal");
+const windowEl = document.getElementById("window");
+const titlebar = document.getElementById("titlebar");
 
 const fileURL = "EclipseV1.rbxm";
-let running = false;
+let commandHistory = [];
+let historyIndex = -1;
 
-function logLine(text, delay = 50) {
-  return new Promise(resolve => {
-    const line = document.createElement("div");
-    line.className = "line";
-    terminal.appendChild(line);
+// Center window on load
+window.addEventListener("load", () => {
+  const x = (window.innerWidth - windowEl.offsetWidth) / 2;
+  const y = (window.innerHeight - windowEl.offsetHeight) / 2;
+  windowEl.style.left = x + "px";
+  windowEl.style.top = y + "px";
+  createInputLine();
+});
 
-    let i = 0;
-    const interval = setInterval(() => {
-      line.textContent = text.slice(0, i);
-      i++;
-      if (i > text.length) {
-        clearInterval(interval);
-        line.classList.add("visible");
-        terminal.scrollTop = terminal.scrollHeight;
-        resolve();
-      }
-    }, delay / text.length);
-  });
+// Dragging functionality
+let isDragging = false;
+let currentX;
+let currentY;
+let initialX;
+let initialY;
+let xOffset = 0;
+let yOffset = 0;
+
+titlebar.addEventListener("mousedown", dragStart);
+document.addEventListener("mousemove", drag);
+document.addEventListener("mouseup", dragEnd);
+
+function dragStart(e) {
+  initialX = e.clientX - xOffset;
+  initialY = e.clientY - yOffset;
+  if (e.target === titlebar || titlebar.contains(e.target)) {
+    isDragging = true;
+  }
 }
 
-async function runPipeline() {
-  if (running) return;
-  running = true;
-  runBtn.disabled = true;
-  dlBtn.disabled = true;
-  terminal.innerHTML = "";
-  bar.style.width = "0%";
-  status.textContent = "Initializing system...";
+function drag(e) {
+  if (isDragging) {
+    e.preventDefault();
+    currentX = e.clientX - initialX;
+    currentY = e.clientY - initialY;
+    xOffset = currentX;
+    yOffset = currentY;
+    windowEl.style.transform = `translate(${currentX}px, ${currentY}px)`;
+  }
+}
+
+function dragEnd() {
+  isDragging = false;
+}
+
+function addLine(text, className = "") {
+  const line = document.createElement("div");
+  line.className = "line " + className;
+  line.textContent = text;
+  terminalDiv.appendChild(line);
+  terminalDiv.scrollTop = terminalDiv.scrollHeight;
+}
+
+function createInputLine() {
+  const inputLine = document.createElement("div");
+  inputLine.className = "input-line";
+  inputLine.innerHTML = `
+    <span class="prompt">root@eclipse:~$</span>
+    <input type="text" id="input" autocomplete="off" autofocus>
+  `;
+  terminalDiv.appendChild(inputLine);
   
-  await logLine("[SYS] Boot sequence initiated...");
-  await logLine("[SYS] Loading core modules...");
-  await logLine("[SYS] Environment verified.");
-  status.textContent = "Reading file metadata...";
-  await delay(700);
-  await logLine("[FS] Searching for file: EclipseV1.rbxm");
-  await delay(500);
-  await logLine("[FS] File located.");
-  await logLine("[HASH] Generating checksum (SHA-256)");
-
-  const hash = randomHash();
-  await logLine(`[HASH] Checksum: ${hash}`);
-  status.textContent = "Verifying integrity...";
-  await delay(600);
-  await logLine("[VERIFY] No corruption detected. Integrity OK.");
-
-  status.textContent = "Processing package...";
-  await simulateProgress(0, 70, 1200);
-
-  await logLine("[PROC] Applying encryption headers...");
-  await simulateProgress(70, 95, 1000);
-  await logLine("[PROC] Packaging complete.");
-
-  status.textContent = "Finalizing...";
-  await delay(700);
-  await logLine("[SYS] Operation complete.");
-  await simulateProgress(95, 100, 600);
-
-  status.textContent = "Ready";
-  dlBtn.disabled = false;
-  running = false;
+  const input = document.getElementById("input");
+  input.focus();
+  
+  input.addEventListener("keydown", handleInput);
+  terminalDiv.scrollTop = terminalDiv.scrollHeight;
 }
 
-function simulateProgress(start, end, duration) {
-  return new Promise(resolve => {
-    const startTime = performance.now();
-    function frame(now) {
-      const t = Math.min(1, (now - startTime) / duration);
-      const value = start + (end - start) * t;
-      bar.style.width = value + "%";
-      if (t < 1) requestAnimationFrame(frame);
-      else resolve();
+function handleInput(e) {
+  const input = e.target;
+  
+  if (e.key === "Enter") {
+    const command = input.value.trim();
+    if (command) {
+      commandHistory.push(command);
+      historyIndex = commandHistory.length;
+      addLine(`root@eclipse:~$ ${command}`);
+      processCommand(command);
     }
-    requestAnimationFrame(frame);
-  });
+    input.parentElement.remove();
+    createInputLine();
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    if (historyIndex > 0) {
+      historyIndex--;
+      input.value = commandHistory[historyIndex];
+    }
+  } else if (e.key === "ArrowDown") {
+    e.preventDefault();
+    if (historyIndex < commandHistory.length - 1) {
+      historyIndex++;
+      input.value = commandHistory[historyIndex];
+    } else {
+      historyIndex = commandHistory.length;
+      input.value = "";
+    }
+  }
 }
 
-function delay(ms) {
-  return new Promise(r => setTimeout(r, ms));
+function processCommand(cmd) {
+  const parts = cmd.toLowerCase().split(" ");
+  const command = parts[0];
+  
+  switch(command) {
+    case "/help":
+      addLine("Available Commands:", "system");
+      addLine("  /help        - Show this help message");
+      addLine("  /download    - Download Eclipse V1 file");
+      addLine("  /init        - Initialize system boot sequence");
+      addLine("  /status      - Show system status");
+      addLine("  /hash        - Generate file checksum");
+      addLine("  /clear       - Clear terminal");
+      addLine("  /about       - About Eclipse V1");
+      addLine("  /exit        - Close terminal");
+      break;
+      
+    case "/download":
+      addLine("[DOWNLOAD] Initiating secure file transfer...", "system");
+      setTimeout(() => {
+        addLine("[DOWNLOAD] File: EclipseV1.rbxm", "success");
+        addLine("[DOWNLOAD] Transfer complete.", "success");
+        const a = document.createElement("a");
+        a.href = fileURL;
+        a.download = "EclipseV1.rbxm";
+        a.click();
+      }, 800);
+      break;
+      
+    case "/init":
+      addLine("[SYS] Initializing boot sequence...", "system");
+      setTimeout(() => addLine("[SYS] Loading core modules...", "system"), 400);
+      setTimeout(() => addLine("[SYS] Environment verified.", "success"), 800);
+      setTimeout(() => addLine("[SYS] System ready.", "success"), 1200);
+      break;
+      
+    case "/status":
+      addLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "system");
+      addLine("System Status: ONLINE", "success");
+      addLine("File Status: READY");
+      addLine("Security: ENABLED");
+      addLine(`Uptime: ${Math.floor(Math.random() * 1000)}h ${Math.floor(Math.random() * 60)}m`);
+      addLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "system");
+      break;
+      
+    case "/hash":
+      addLine("[HASH] Generating SHA-256 checksum...", "system");
+      const hash = randomHash();
+      setTimeout(() => {
+        addLine(`[HASH] ${hash}`, "success");
+      }, 600);
+      break;
+      
+    case "/clear":
+      terminalDiv.innerHTML = "";
+      break;
+      
+    case "/about":
+      addLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "system");
+      addLine("Eclipse V1 Admin Panel");
+      addLine("Version: 1.0.0");
+      addLine("Secure File Distribution System");
+      addLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "system");
+      break;
+      
+    case "/exit":
+      addLine("[SYS] Closing terminal...", "warning");
+      setTimeout(closeWindow, 500);
+      break;
+      
+    default:
+      addLine(`Command not found: ${cmd}`, "error");
+      addLine('Type /help for available commands', "muted");
+      break;
+  }
 }
 
 function randomHash() {
@@ -226,13 +359,19 @@ function randomHash() {
   return hash;
 }
 
-runBtn.onclick = runPipeline;
-dlBtn.onclick = () => {
-  const a = document.createElement("a");
-  a.href = fileURL;
-  a.download = "EclipseV1.rbxm";
-  a.click();
-};
+function closeWindow() {
+  windowEl.style.opacity = "0";
+  windowEl.style.transform = `translate(${xOffset}px, ${yOffset}px) scale(0.8)`;
+  windowEl.style.transition = "all 0.3s ease";
+}
+
+// Click to focus input
+terminalDiv.addEventListener("click", (e) => {
+  if (e.target === terminalDiv) {
+    const input = document.getElementById("input");
+    if (input) input.focus();
+  }
+});
 </script>
 </body>
 </html>
